@@ -1,0 +1,20 @@
+global using Xunit;
+global using NSubstitute;
+global using Shouldly;
+global using Microsoft.Extensions.Logging;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using IndFusion.Ember.Abstractions.Hubs;
+global using IndFusion.Ember.Abstractions.Health;
+global using IndFusion.Ember.Abstractions.Dashboards;
+global using IndFusion.Ember.Infrastructure.Connection;
+global using IndFusion.Ember.Infrastructure.Messaging;
+global using IndQuestResults;
+global using IndQuestResults.Operations;
+global using Microsoft.AspNetCore.SignalR;
+global using Microsoft.AspNetCore.SignalR.Client;
+global using Microsoft.Extensions.Diagnostics.HealthChecks;
+
