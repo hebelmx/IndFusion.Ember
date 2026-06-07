@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Framework Configuration -->
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Nullable and Implicit Configuration -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Assembly Configuration -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RootNamespace>IndFusion.Ember</RootNamespace>
+    <AssemblyName>IndFusion.Ember</AssemblyName>
+
+    <!-- Quality Assurance -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- NuGet Package Configuration -->
+    <IsPackable>true</IsPackable>
+    <PackageId>IndFusion.Ember</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Abel Briones Ramirez</Authors>
+    <Company>Exxerpro Solutions</Company>
+    <Product>IndFusion Ember</Product>
+    <PackageOwners>abel.briones@exxerpro.com</PackageOwners>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <Description>🔥 IndFusion.Ember - The fusion point where real-time messages ignite and spread across any transport. Transport-agnostic real-time communication abstraction following Clean Architecture principles. Like a glowing ember spreading through systems: messages ignite (movement), propagate (tracking), and illuminate (display). Currently implemented with SignalR, but designed for universal transport fusion: WebSockets, gRPC, TCP, Azure Service Bus, AWS EventBridge, OPC-UA, and more. Perfect for dashboards, health monitoring, and real-time UI updates - universal infrastructure for all applications.</Description>
+    <PackageTags>ember;fusion;signalr;blazor;realtime;dashboard;health-check;monitoring;hexagonal-architecture;clean-architecture;railway-oriented-programming;abstractions;transport-agnostic;websocket;grpc;azure;aws;opc-ua;tcp;messaging</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/hebelmx/IndFusion.Ember.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/hebelmx/IndFusion.Ember</PackageProjectUrl>
+    <Copyright>© 2025 Exxerpro Solutions</Copyright>
+    
+    <!-- Assembly Metadata -->
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+  </PropertyGroup>
+
+  <!-- ============================================================================ -->
+  <!-- PACKAGE REFERENCES - CORE FRAMEWORK -->
+  <!-- ============================================================================ -->
+  <ItemGroup Label="Core Framework">
+    <PackageReference Include="IndQuestResults" Version="1.1.0" />
+  </ItemGroup>
+
+  <!-- ============================================================================ -->
+  <!-- PACKAGE REFERENCES - SIGNALR -->
+  <!-- ============================================================================ -->
+  <ItemGroup Label="SignalR">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
+  </ItemGroup>
+
+  <!-- ============================================================================ -->
+  <!-- PACKAGE REFERENCES - BLAZOR -->
+  <!-- ============================================================================ -->
+  <ItemGroup Label="Blazor">
+    <PackageReference Include="MudBlazor" Version="8.11" />
+  </ItemGroup>
+
+  <!-- ============================================================================ -->
+  <!-- PACKAGE CONTENT -->
+  <!-- ============================================================================ -->
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" Condition="Exists('icon.png')" />
+  </ItemGroup>
+
+</Project>
+
