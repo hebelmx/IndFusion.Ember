@@ -13,6 +13,9 @@ public class DashboardTests
     public DashboardTests()
     {
         _logger = Substitute.For<ILogger<Dashboard<TestData>>>();
+        // Source-generated LoggerMessage methods guard on IsEnabled before calling Log,
+        // so the substitute must report the level as enabled for log-assertion tests.
+        _logger.IsEnabled(Arg.Any<LogLevel>()).Returns(true);
     }
 
     /// <summary>

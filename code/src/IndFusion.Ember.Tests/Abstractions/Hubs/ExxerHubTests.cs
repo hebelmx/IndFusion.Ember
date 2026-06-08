@@ -23,7 +23,10 @@ public class ExxerHubTests
     public ExxerHubTests()
     {
         _logger = Substitute.For<ILogger<TestHub>>();
-        
+        // Source-generated LoggerMessage methods guard on IsEnabled before calling Log,
+        // so the substitute must report levels as enabled for log-assertion tests.
+        _logger.IsEnabled(Arg.Any<LogLevel>()).Returns(true);
+
         // Setup SignalR mocks
         _mockContext = Substitute.For<HubCallerContext>();
         _mockClients = Substitute.For<IHubCallerClients>();
@@ -33,11 +36,18 @@ public class ExxerHubTests
 
         // Configure mock context
         _mockContext.ConnectionId.Returns("test-connection-id");
-        
+
         // Configure mock clients
         _mockClients.All.Returns(_mockClientProxy);
         _mockClients.Client(Arg.Any<string>()).Returns(_mockSingleClientProxy); // Client() returns ISingleClientProxy
         _mockClients.Group(Arg.Any<string>()).Returns(_mockClientProxy);
+
+        // SendAsync(...) is an extension over SendCoreAsync; completing it lets the
+        // success paths run instead of faulting into the catch blocks.
+        _mockClientProxy.SendCoreAsync(Arg.Any<string>(), Arg.Any<object?[]>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+        _mockSingleClientProxy.SendCoreAsync(Arg.Any<string>(), Arg.Any<object?[]>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
     }
 
     /// <summary>
@@ -322,6 +332,199 @@ public class ExxerHubTests
     // Note: OnConnectedAsync and OnDisconnectedAsync require Context to be properly initialized
     // These methods access Context.ConnectionId which requires SignalR infrastructure.
     // These scenarios should be tested via integration tests with actual SignalR infrastructure.
+
+    /// <summary>
+    /// Tests that SendToAllAsync returns failure when the Clients property is null.
+    /// Kills the null-guard mutations on the Clients check.
+    /// </summary>
+    [Fact]
+    public async Task SendToAllAsync_WithNullClients_ReturnsFailure()
+    {
+        // Arrange
+        var hub = new TestHub(_logger);
+        TestHubHelper.SetupHub(hub, _mockContext, null!, _mockGroups);
+        var testData = new TestData { Id = 1, Name = "Test" };
+
+        // Act
+        var result = await hub.SendToAllAsync(testData, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error!.ShouldContain("Clients property is null");
+    }
+
+    /// <summary>
+    /// Tests that SendToAllAsync returns failure when Clients.All is null.
+    /// </summary>
+    [Fact]
+    public async Task SendToAllAsync_WithNullClientsAll_ReturnsFailure()
+    {
+        // Arrange
+        _mockClients.All.Returns((IClientProxy)null!);
+        var hub = CreateTestHub();
+        var testData = new TestData { Id = 1, Name = "Test" };
+
+        // Act
+        var result = await hub.SendToAllAsync(testData, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error!.ShouldContain("Clients.All property is null");
+    }
+
+    /// <summary>
+    /// Tests that SendToAllAsync returns failure when the data payload is null.
+    /// </summary>
+    [Fact]
+    public async Task SendToAllAsync_WithNullData_ReturnsFailure()
+    {
+        // Arrange
+        var hub = CreateTestHub();
+
+        // Act
+        var result = await hub.SendToAllAsync(null!, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error!.ShouldContain("Data property is null");
+    }
+
+    /// <summary>
+    /// Tests that SendToAllAsync succeeds and sends on the happy path with valid data.
+    /// </summary>
+    [Fact]
+    public async Task SendToAllAsync_WithValidData_ReturnsSuccess()
+    {
+        // Arrange
+        var hub = CreateTestHub();
+        var testData = new TestData { Id = 1, Name = "Test" };
+
+        // Act
+        var result = await hub.SendToAllAsync(testData, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.ShouldBeFalse();
+        result.IsCancelled().ShouldBeFalse();
+        await _mockClientProxy.Received(1).SendCoreAsync(
+            "ReceiveMessage", Arg.Any<object?[]>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    /// Tests that SendToClientAsync succeeds on the happy path with a valid connection.
+    /// </summary>
+    [Fact]
+    public async Task SendToClientAsync_WithValidData_ReturnsSuccess()
+    {
+        // Arrange
+        var hub = CreateTestHub();
+        var testData = new TestData { Id = 1, Name = "Test" };
+
+        // Act
+        var result = await hub.SendToClientAsync("conn-1", testData, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.ShouldBeFalse();
+        result.IsCancelled().ShouldBeFalse();
+        await _mockSingleClientProxy.Received(1).SendCoreAsync(
+            "ReceiveMessage", Arg.Any<object?[]>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    /// Tests that SendToGroupAsync succeeds on the happy path with a valid group.
+    /// </summary>
+    [Fact]
+    public async Task SendToGroupAsync_WithValidData_ReturnsSuccess()
+    {
+        // Arrange
+        var hub = CreateTestHub();
+        var testData = new TestData { Id = 1, Name = "Test" };
+
+        // Act
+        var result = await hub.SendToGroupAsync("group-1", testData, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.ShouldBeFalse();
+        result.IsCancelled().ShouldBeFalse();
+        await _mockClientProxy.Received(1).SendCoreAsync(
+            "ReceiveMessage", Arg.Any<object?[]>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    /// Tests that OnConnectedAsync logs an Information message for the connecting client.
+    /// </summary>
+    [Fact]
+    public async Task OnConnectedAsync_LogsInformation_AndCompletes()
+    {
+        // Arrange
+        var hub = CreateTestHub();
+
+        // Act
+        await hub.OnConnectedAsync();
+
+        // Assert
+        _logger.Received(1).Log(
+            LogLevel.Information,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>());
+    }
+
+    /// <summary>
+    /// Tests that OnDisconnectedAsync logs a Warning (not Information) when an exception is present.
+    /// Kills the equality mutation on the (exception != null) branch.
+    /// </summary>
+    [Fact]
+    public async Task OnDisconnectedAsync_WithException_LogsWarning()
+    {
+        // Arrange
+        var hub = CreateTestHub();
+        var error = new InvalidOperationException("boom");
+
+        // Act
+        await hub.OnDisconnectedAsync(error);
+
+        // Assert
+        _logger.Received(1).Log(
+            LogLevel.Warning,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>());
+        _logger.DidNotReceive().Log(
+            LogLevel.Information,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>());
+    }
+
+    /// <summary>
+    /// Tests that OnDisconnectedAsync logs an Information message (not Warning) without an exception.
+    /// </summary>
+    [Fact]
+    public async Task OnDisconnectedAsync_WithoutException_LogsInformation()
+    {
+        // Arrange
+        var hub = CreateTestHub();
+
+        // Act
+        await hub.OnDisconnectedAsync(null);
+
+        // Assert
+        _logger.Received(1).Log(
+            LogLevel.Information,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>());
+        _logger.DidNotReceive().Log(
+            LogLevel.Warning,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>());
+    }
 
     /// <summary>
     /// Creates a test hub instance with mocked dependencies.
