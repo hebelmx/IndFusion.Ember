@@ -1,10 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-net/master/schemas/stryker-config.json",
   "stryker-config": {
-    "project": "ExxerCube.Prisma.SignalR.Abstractions.csproj",
+    "project": "IndFusion.Ember.csproj",
     "test-projects": [
-      "ExxerCube.Prisma.SignalR.Abstractions.Tests.csproj"
+      "../IndFusion.Ember.Tests/IndFusion.Ember.Tests.csproj"
     ],
+    "test-runner": "mtp",
     "mutate": [
       "**/*.cs"
     ],
@@ -19,6 +20,11 @@
     "verbosity": "info",
     "concurrency": 4,
     "additional-timeout": 10000,
-    "break-on-initial-test-failure": false
+    "break-on-initial-test-failure": true,
+    "reporters": [
+      "html",
+      "progress",
+      "json"
+    ]
   }
 }
