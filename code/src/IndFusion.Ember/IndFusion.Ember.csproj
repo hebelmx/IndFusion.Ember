@@ -10,7 +10,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     
     <!-- Assembly Configuration -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <RootNamespace>IndFusion.Ember</RootNamespace>
     <AssemblyName>IndFusion.Ember</AssemblyName>
 

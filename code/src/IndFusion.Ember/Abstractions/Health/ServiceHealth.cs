@@ -42,7 +42,7 @@ public class ServiceHealth<T> : IServiceHealth<T>
     {
         if (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Operation cancelled before updating health status");
+            _logger.CancelledBeforeUpdateHealth();
             return Task.FromResult(ResultExtensions.Cancelled());
         }
 
@@ -53,23 +53,41 @@ public class ServiceHealth<T> : IServiceHealth<T>
             _data = data;
             _lastUpdated = DateTime.UtcNow;
 
-            _logger.LogDebug("Health status updated from {PreviousStatus} to {NewStatus}", previousStatus, status);
+            _logger.HealthStatusUpdated(previousStatus, status);
 
             // Raise event if status changed
             if (previousStatus != status)
             {
                 var args = new HealthStatusChangedEventArgs<T>(previousStatus, status, data);
                 HealthStatusChanged?.Invoke(this, args);
-                _logger.LogInformation("Health status changed from {PreviousStatus} to {NewStatus}", previousStatus, status);
+                _logger.HealthStatusChangedLog(previousStatus, status);
             }
 
             return Task.FromResult(Result.Success());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating health status");
+            _logger.ErrorUpdatingHealth(ex);
             return Task.FromResult(Result.WithFailure($"Failed to update health status: {ex.Message}"));
         }
     }
+}
+
+/// <summary>
+/// High-performance source-generated log messages for <see cref="ServiceHealth{T}"/>.
+/// </summary>
+internal static partial class ServiceHealthLog
+{
+    [LoggerMessage(EventId = 1201, Level = LogLevel.Warning, Message = "Operation cancelled before updating health status")]
+    public static partial void CancelledBeforeUpdateHealth(this ILogger logger);
+
+    [LoggerMessage(EventId = 1202, Level = LogLevel.Debug, Message = "Health status updated from {PreviousStatus} to {NewStatus}")]
+    public static partial void HealthStatusUpdated(this ILogger logger, HealthStatus previousStatus, HealthStatus newStatus);
+
+    [LoggerMessage(EventId = 1203, Level = LogLevel.Information, Message = "Health status changed from {PreviousStatus} to {NewStatus}")]
+    public static partial void HealthStatusChangedLog(this ILogger logger, HealthStatus previousStatus, HealthStatus newStatus);
+
+    [LoggerMessage(EventId = 1204, Level = LogLevel.Error, Message = "Error updating health status")]
+    public static partial void ErrorUpdatingHealth(this ILogger logger, Exception exception);
 }
 

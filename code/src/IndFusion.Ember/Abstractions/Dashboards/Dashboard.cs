@@ -52,7 +52,7 @@ public abstract class Dashboard<T> : IDashboard<T>, IAsyncDisposable
     {
         if (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Operation cancelled before connecting");
+            _logger.CancelledBeforeConnecting();
             return ResultExtensions.Cancelled();
         }
 
@@ -71,18 +71,18 @@ public abstract class Dashboard<T> : IDashboard<T>, IAsyncDisposable
 
             UpdateConnectionState(ConnectionState.Connected);
 
-            _logger.LogInformation("Successfully connected to SignalR hub");
+            _logger.ConnectedToHub();
             return Result.Success();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Connection cancelled");
+            _logger.ConnectionCancelled();
             UpdateConnectionState(ConnectionState.Disconnected);
             return ResultExtensions.Cancelled();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error connecting to SignalR hub");
+            _logger.ErrorConnecting(ex);
             UpdateConnectionState(ConnectionState.Failed);
             return Result.WithFailure($"Failed to connect: {ex.Message}");
         }
@@ -105,12 +105,12 @@ public abstract class Dashboard<T> : IDashboard<T>, IAsyncDisposable
         {
             await _hubConnection.StopAsync(cancellationToken).ConfigureAwait(false);
             UpdateConnectionState(ConnectionState.Disconnected);
-            _logger.LogInformation("Disconnected from SignalR hub");
+            _logger.DisconnectedFromHub();
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error disconnecting from SignalR hub");
+            _logger.ErrorDisconnecting(ex);
             return Result.WithFailure($"Failed to disconnect: {ex.Message}");
         }
     }
@@ -123,12 +123,12 @@ public abstract class Dashboard<T> : IDashboard<T>, IAsyncDisposable
     {
         if (data == null)
         {
-            _logger.LogWarning("Received null message");
+            _logger.ReceivedNullMessage();
             return;
         }
 
         _data.Add(data);
-        _logger.LogDebug("Received message, total data count: {Count}", _data.Count);
+        _logger.ReceivedMessage(_data.Count);
 
         var args = new DataReceivedEventArgs<T>(data);
         DataReceived?.Invoke(this, args);
@@ -144,7 +144,7 @@ public abstract class Dashboard<T> : IDashboard<T>, IAsyncDisposable
         var previousState = _connectionState;
         _connectionState = newState;
 
-        _logger.LogDebug("Connection state changed from {PreviousState} to {NewState}", previousState, newState);
+        _logger.ConnectionStateChangedLog(previousState, newState);
 
         var args = new ConnectionStateChangedEventArgs(previousState, newState);
         ConnectionStateChanged?.Invoke(this, args);
@@ -156,7 +156,45 @@ public abstract class Dashboard<T> : IDashboard<T>, IAsyncDisposable
     public virtual async ValueTask DisposeAsync()
     {
         await DisconnectAsync().ConfigureAwait(false);
-        _hubConnection?.DisposeAsync();
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync().ConfigureAwait(false);
+        }
+
+        GC.SuppressFinalize(this);
     }
+}
+
+/// <summary>
+/// High-performance source-generated log messages for <see cref="Dashboard{T}"/>.
+/// </summary>
+internal static partial class DashboardLog
+{
+    [LoggerMessage(EventId = 1101, Level = LogLevel.Warning, Message = "Operation cancelled before connecting")]
+    public static partial void CancelledBeforeConnecting(this ILogger logger);
+
+    [LoggerMessage(EventId = 1102, Level = LogLevel.Information, Message = "Successfully connected to SignalR hub")]
+    public static partial void ConnectedToHub(this ILogger logger);
+
+    [LoggerMessage(EventId = 1103, Level = LogLevel.Information, Message = "Connection cancelled")]
+    public static partial void ConnectionCancelled(this ILogger logger);
+
+    [LoggerMessage(EventId = 1104, Level = LogLevel.Error, Message = "Error connecting to SignalR hub")]
+    public static partial void ErrorConnecting(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 1105, Level = LogLevel.Information, Message = "Disconnected from SignalR hub")]
+    public static partial void DisconnectedFromHub(this ILogger logger);
+
+    [LoggerMessage(EventId = 1106, Level = LogLevel.Error, Message = "Error disconnecting from SignalR hub")]
+    public static partial void ErrorDisconnecting(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 1107, Level = LogLevel.Warning, Message = "Received null message")]
+    public static partial void ReceivedNullMessage(this ILogger logger);
+
+    [LoggerMessage(EventId = 1108, Level = LogLevel.Debug, Message = "Received message, total data count: {Count}")]
+    public static partial void ReceivedMessage(this ILogger logger, int count);
+
+    [LoggerMessage(EventId = 1109, Level = LogLevel.Debug, Message = "Connection state changed from {PreviousState} to {NewState}")]
+    public static partial void ConnectionStateChangedLog(this ILogger logger, ConnectionState previousState, ConnectionState newState);
 }
 

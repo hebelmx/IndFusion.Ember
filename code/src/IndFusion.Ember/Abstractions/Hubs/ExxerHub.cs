@@ -26,24 +26,42 @@ public abstract class ExxerHub<T> : Hub, IExxerHub<T>
     {
         if (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Operation cancelled before sending to all clients");
+            _logger.CancelledBeforeSendAll();
             return ResultExtensions.Cancelled();
+        }
+
+        if (Clients is null)
+        {
+            _logger.ClientsNull();
+            return Result.WithFailure("Clients property is null");
+        }
+
+        if (Clients.All is null)
+        {
+            _logger.ClientsAllNull();
+            return Result.WithFailure("Clients.All property is null");
+        }
+
+        if (data is null)
+        {
+            _logger.DataNull();
+            return Result.WithFailure("Data property is null");
         }
 
         try
         {
             await Clients.All.SendAsync("ReceiveMessage", data, cancellationToken).ConfigureAwait(false);
-            _logger.LogDebug("Successfully sent data to all clients");
+            _logger.SentToAll();
             return Result.Success();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Operation cancelled while sending to all clients");
+            _logger.CancelledDuringSendAll();
             return ResultExtensions.Cancelled();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending data to all clients");
+            _logger.ErrorSendAll(ex);
             return Result.WithFailure($"Failed to send data to all clients: {ex.Message}");
         }
     }
@@ -53,7 +71,7 @@ public abstract class ExxerHub<T> : Hub, IExxerHub<T>
     {
         if (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Operation cancelled before sending to client");
+            _logger.CancelledBeforeSendClient();
             return ResultExtensions.Cancelled();
         }
 
@@ -65,17 +83,17 @@ public abstract class ExxerHub<T> : Hub, IExxerHub<T>
         try
         {
             await Clients.Client(connectionId).SendAsync("ReceiveMessage", data, cancellationToken).ConfigureAwait(false);
-            _logger.LogDebug("Successfully sent data to client {ConnectionId}", connectionId);
+            _logger.SentToClient(connectionId);
             return Result.Success();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Operation cancelled while sending to client {ConnectionId}", connectionId);
+            _logger.CancelledDuringSendClient(connectionId);
             return ResultExtensions.Cancelled();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending data to client {ConnectionId}", connectionId);
+            _logger.ErrorSendClient(ex, connectionId);
             return Result.WithFailure($"Failed to send data to client {connectionId}: {ex.Message}");
         }
     }
@@ -85,7 +103,7 @@ public abstract class ExxerHub<T> : Hub, IExxerHub<T>
     {
         if (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Operation cancelled before sending to group");
+            _logger.CancelledBeforeSendGroup();
             return ResultExtensions.Cancelled();
         }
 
@@ -97,17 +115,17 @@ public abstract class ExxerHub<T> : Hub, IExxerHub<T>
         try
         {
             await Clients.Group(groupName).SendAsync("ReceiveMessage", data, cancellationToken).ConfigureAwait(false);
-            _logger.LogDebug("Successfully sent data to group {GroupName}", groupName);
+            _logger.SentToGroup(groupName);
             return Result.Success();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Operation cancelled while sending to group {GroupName}", groupName);
+            _logger.CancelledDuringSendGroup(groupName);
             return ResultExtensions.Cancelled();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending data to group {GroupName}", groupName);
+            _logger.ErrorSendGroup(ex, groupName);
             return Result.WithFailure($"Failed to send data to group {groupName}: {ex.Message}");
         }
     }
@@ -117,7 +135,7 @@ public abstract class ExxerHub<T> : Hub, IExxerHub<T>
     {
         if (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Operation cancelled before getting connection count");
+            _logger.CancelledBeforeGetCount();
             return Task.FromResult(ResultExtensions.Cancelled<int>());
         }
 
@@ -125,12 +143,12 @@ public abstract class ExxerHub<T> : Hub, IExxerHub<T>
         {
             // Note: SignalR doesn't provide direct connection count access
             // This is a placeholder - implementations should track connections via OnConnectedAsync/OnDisconnectedAsync
-            _logger.LogWarning("GetConnectionCountAsync not fully implemented - connection tracking required");
+            _logger.CountNotImplemented();
             return Task.FromResult(Result<int>.WithFailure("Connection count tracking not implemented"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting connection count");
+            _logger.ErrorGetCount(ex);
             return Task.FromResult(Result<int>.WithFailure($"Failed to get connection count: {ex.Message}"));
         }
     }
@@ -141,7 +159,7 @@ public abstract class ExxerHub<T> : Hub, IExxerHub<T>
     /// <returns>A task representing the asynchronous operation.</returns>
     public override async Task OnConnectedAsync()
     {
-        _logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
+        _logger.ClientConnected(Context.ConnectionId);
         await base.OnConnectedAsync().ConfigureAwait(false);
     }
 
@@ -154,14 +172,82 @@ public abstract class ExxerHub<T> : Hub, IExxerHub<T>
     {
         if (exception != null)
         {
-            _logger.LogWarning(exception, "Client disconnected with error: {ConnectionId}", Context.ConnectionId);
+            _logger.ClientDisconnectedError(exception, Context.ConnectionId);
         }
         else
         {
-            _logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
+            _logger.ClientDisconnected(Context.ConnectionId);
         }
 
         await base.OnDisconnectedAsync(exception).ConfigureAwait(false);
     }
 }
 
+/// <summary>
+/// High-performance source-generated log messages for <see cref="ExxerHub{T}"/>.
+/// </summary>
+internal static partial class ExxerHubLog
+{
+    [LoggerMessage(EventId = 1001, Level = LogLevel.Warning, Message = "Operation cancelled before sending to all clients")]
+    public static partial void CancelledBeforeSendAll(this ILogger logger);
+
+    [LoggerMessage(EventId = 1002, Level = LogLevel.Error, Message = "Clients property is null")]
+    public static partial void ClientsNull(this ILogger logger);
+
+    [LoggerMessage(EventId = 1003, Level = LogLevel.Error, Message = "Clients.All property is null")]
+    public static partial void ClientsAllNull(this ILogger logger);
+
+    [LoggerMessage(EventId = 1004, Level = LogLevel.Error, Message = "Data property is null")]
+    public static partial void DataNull(this ILogger logger);
+
+    [LoggerMessage(EventId = 1005, Level = LogLevel.Debug, Message = "Successfully sent data to all clients")]
+    public static partial void SentToAll(this ILogger logger);
+
+    [LoggerMessage(EventId = 1006, Level = LogLevel.Information, Message = "Operation cancelled while sending to all clients")]
+    public static partial void CancelledDuringSendAll(this ILogger logger);
+
+    [LoggerMessage(EventId = 1007, Level = LogLevel.Error, Message = "Error sending data to all clients")]
+    public static partial void ErrorSendAll(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 1008, Level = LogLevel.Warning, Message = "Operation cancelled before sending to client")]
+    public static partial void CancelledBeforeSendClient(this ILogger logger);
+
+    [LoggerMessage(EventId = 1009, Level = LogLevel.Debug, Message = "Successfully sent data to client {ConnectionId}")]
+    public static partial void SentToClient(this ILogger logger, string connectionId);
+
+    [LoggerMessage(EventId = 1010, Level = LogLevel.Information, Message = "Operation cancelled while sending to client {ConnectionId}")]
+    public static partial void CancelledDuringSendClient(this ILogger logger, string connectionId);
+
+    [LoggerMessage(EventId = 1011, Level = LogLevel.Error, Message = "Error sending data to client {ConnectionId}")]
+    public static partial void ErrorSendClient(this ILogger logger, Exception exception, string connectionId);
+
+    [LoggerMessage(EventId = 1012, Level = LogLevel.Warning, Message = "Operation cancelled before sending to group")]
+    public static partial void CancelledBeforeSendGroup(this ILogger logger);
+
+    [LoggerMessage(EventId = 1013, Level = LogLevel.Debug, Message = "Successfully sent data to group {GroupName}")]
+    public static partial void SentToGroup(this ILogger logger, string groupName);
+
+    [LoggerMessage(EventId = 1014, Level = LogLevel.Information, Message = "Operation cancelled while sending to group {GroupName}")]
+    public static partial void CancelledDuringSendGroup(this ILogger logger, string groupName);
+
+    [LoggerMessage(EventId = 1015, Level = LogLevel.Error, Message = "Error sending data to group {GroupName}")]
+    public static partial void ErrorSendGroup(this ILogger logger, Exception exception, string groupName);
+
+    [LoggerMessage(EventId = 1016, Level = LogLevel.Warning, Message = "Operation cancelled before getting connection count")]
+    public static partial void CancelledBeforeGetCount(this ILogger logger);
+
+    [LoggerMessage(EventId = 1017, Level = LogLevel.Warning, Message = "GetConnectionCountAsync not fully implemented - connection tracking required")]
+    public static partial void CountNotImplemented(this ILogger logger);
+
+    [LoggerMessage(EventId = 1018, Level = LogLevel.Error, Message = "Error getting connection count")]
+    public static partial void ErrorGetCount(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 1019, Level = LogLevel.Information, Message = "Client connected: {ConnectionId}")]
+    public static partial void ClientConnected(this ILogger logger, string connectionId);
+
+    [LoggerMessage(EventId = 1020, Level = LogLevel.Warning, Message = "Client disconnected with error: {ConnectionId}")]
+    public static partial void ClientDisconnectedError(this ILogger logger, Exception exception, string connectionId);
+
+    [LoggerMessage(EventId = 1021, Level = LogLevel.Information, Message = "Client disconnected: {ConnectionId}")]
+    public static partial void ClientDisconnected(this ILogger logger, string connectionId);
+}

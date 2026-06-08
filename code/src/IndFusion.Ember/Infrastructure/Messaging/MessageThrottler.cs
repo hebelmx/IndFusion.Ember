@@ -86,7 +86,7 @@ public class MessageThrottler<T> : IDisposable
     private async Task SendMessageAsync(T message, CancellationToken cancellationToken)
     {
         _lastSendTime = DateTime.UtcNow;
-        _logger.LogDebug("Sending throttled message");
+        _logger.SendingThrottledMessage();
 
         var args = new ThrottledMessageEventArgs<T>(message);
         MessageReady?.Invoke(this, args);
@@ -98,7 +98,17 @@ public class MessageThrottler<T> : IDisposable
     public void Dispose()
     {
         _lock.Dispose();
+        GC.SuppressFinalize(this);
     }
+}
+
+/// <summary>
+/// High-performance source-generated log messages for <see cref="MessageThrottler{T}"/>.
+/// </summary>
+internal static partial class MessageThrottlerLog
+{
+    [LoggerMessage(EventId = 1401, Level = LogLevel.Debug, Message = "Sending throttled message")]
+    public static partial void SendingThrottledMessage(this ILogger logger);
 }
 
 /// <summary>

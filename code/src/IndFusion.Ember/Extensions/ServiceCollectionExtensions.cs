@@ -20,10 +20,7 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         Action<ReconnectionStrategy>? configure = null)
     {
-        if (services == null)
-        {
-            throw new ArgumentNullException(nameof(services));
-        }
+        ArgumentNullException.ThrowIfNull(services);
 
         // Configure reconnection strategy
         var reconnectionStrategy = new ReconnectionStrategy();
@@ -47,10 +44,7 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
-        if (services == null)
-        {
-            throw new ArgumentNullException(nameof(services));
-        }
+        ArgumentNullException.ThrowIfNull(services);
 
         services.Add(new ServiceDescriptor(
             typeof(IServiceHealth<T>),

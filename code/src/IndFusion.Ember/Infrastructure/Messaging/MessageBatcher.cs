@@ -101,7 +101,7 @@ public class MessageBatcher<T> : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error flushing batch in timer callback");
+                _logger.ErrorFlushingBatch(ex);
             }
             finally
             {
@@ -123,7 +123,7 @@ public class MessageBatcher<T> : IDisposable
         _batchTimer?.Dispose();
         _batchTimer = null;
 
-        _logger.LogDebug("Flushing batch of {Count} messages", batch.Count);
+        _logger.FlushingBatch(batch.Count);
 
         var args = new BatchReadyEventArgs<T>(batch);
         BatchReady?.Invoke(this, args);
@@ -136,6 +136,7 @@ public class MessageBatcher<T> : IDisposable
     {
         _batchTimer?.Dispose();
         _lock.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 
@@ -158,5 +159,17 @@ public class BatchReadyEventArgs<T> : EventArgs
     {
         Messages = messages ?? throw new ArgumentNullException(nameof(messages));
     }
+}
+
+/// <summary>
+/// High-performance source-generated log messages for <see cref="MessageBatcher{T}"/>.
+/// </summary>
+internal static partial class MessageBatcherLog
+{
+    [LoggerMessage(EventId = 1301, Level = LogLevel.Error, Message = "Error flushing batch in timer callback")]
+    public static partial void ErrorFlushingBatch(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 1302, Level = LogLevel.Debug, Message = "Flushing batch of {Count} messages")]
+    public static partial void FlushingBatch(this ILogger logger, int count);
 }
 

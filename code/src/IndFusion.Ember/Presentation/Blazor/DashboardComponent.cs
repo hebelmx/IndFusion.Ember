@@ -60,7 +60,7 @@ public abstract class DashboardComponent<T> : ComponentBase, IAsyncDisposable
             var connectResult = await _dashboard.ConnectAsync().ConfigureAwait(false);
             if (connectResult.IsFailure)
             {
-                Logger.LogError("Failed to connect dashboard: {Error}", connectResult.Error);
+                Logger.FailedToConnectDashboard(connectResult.Error);
             }
         }
     }
@@ -109,6 +109,17 @@ public abstract class DashboardComponent<T> : ComponentBase, IAsyncDisposable
             _dashboard.DataReceived -= OnDataReceived;
             await _dashboard.DisposeAsync().ConfigureAwait(false);
         }
+
+        GC.SuppressFinalize(this);
     }
+}
+
+/// <summary>
+/// High-performance source-generated log messages for <see cref="DashboardComponent{T}"/>.
+/// </summary>
+internal static partial class DashboardComponentLog
+{
+    [LoggerMessage(EventId = 1501, Level = LogLevel.Error, Message = "Failed to connect dashboard: {Error}")]
+    public static partial void FailedToConnectDashboard(this ILogger logger, object? error);
 }
 
