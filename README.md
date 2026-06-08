@@ -169,13 +169,13 @@ Perfect for:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md).
+Contributions are welcome! Please open an issue or pull request.
 
 ---
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+Licensed under the MIT License.
 
 ---
 

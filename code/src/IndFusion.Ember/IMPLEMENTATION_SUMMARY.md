@@ -1,166 +1,116 @@
-# SignalR Abstractions Implementation Summary
+# IndFusion.Ember — Implementation Summary
 
 ## Overview
 
-This document summarizes the implementation of the SignalR Unified Hub Abstraction Infrastructure as an independent NuGet package, following ADR-001.
+`IndFusion.Ember` is an independent, packable NuGet library providing a
+transport-agnostic real-time communication abstraction following Clean
+(Hexagonal) Architecture and Railway-Oriented Programming. It was extracted from
+the former `ExxerCube.Prisma.SignalR.Abstractions` and is currently implemented
+over SignalR, with the abstraction layer designed for additional transports.
+
+- **Package id:** `IndFusion.Ember`
+- **Version:** 0.2.0
+- **Target framework:** .NET 10.0
+- **License:** MIT
 
 ## Solution Structure
 
 ```
-ExxerCube.Prisma.SignalR.Abstractions.sln
-├── ExxerCube.Prisma.SignalR.Abstractions/          # Main package project
-│   ├── Abstractions/
-│   │   ├── Hubs/
-│   │   │   ├── IExxerHub.cs
-│   │   │   └── ExxerHub.cs
-│   │   ├── Health/
-│   │   │   ├── IServiceHealth.cs
-│   │   │   └── ServiceHealth.cs
-│   │   └── Dashboards/
-│   │       ├── IDashboard.cs
-│   │       └── Dashboard.cs
-│   ├── Infrastructure/
-│   │   ├── Connection/
-│   │   │   ├── ConnectionState.cs
-│   │   │   └── ReconnectionStrategy.cs
-│   │   └── Messaging/
-│   │       ├── MessageBatcher.cs
-│   │       └── MessageThrottler.cs
-│   ├── Presentation/
-│   │   └── Blazor/
-│   │       ├── DashboardComponent.cs
-│   │       └── ConnectionStateIndicator.razor/.cs
-│   ├── Extensions/
-│   │   ├── ServiceCollectionExtensions.cs
-│   │   └── MudBlazorExtensions.cs
-│   ├── Common/
-│   │   └── ResultExtensions.cs
-│   └── GlobalUsings.cs
-└── ExxerCube.Prisma.SignalR.Abstractions.Tests/    # Test project
+IndFusion.Ember.sln
+└── code/src/
+    ├── IndFusion.Ember/                       # Main package project (Microsoft.NET.Sdk)
+    │   ├── Abstractions/
+    │   │   ├── Hubs/                  { IExxerHub.cs, ExxerHub.cs }
+    │   │   ├── Health/               { IServiceHealth.cs, ServiceHealth.cs }
+    │   │   └── Dashboards/           { IDashboard.cs, Dashboard.cs }
+    │   ├── Infrastructure/
+    │   │   ├── Connection/           { ConnectionState.cs, ReconnectionStrategy.cs }
+    │   │   └── Messaging/            { MessageBatcher.cs, MessageThrottler.cs }
+    │   ├── Presentation/
+    │   │   └── Blazor/               { DashboardComponent.cs,
+    │   │                               ConnectionStateIndicator.cs / .razor }
+    │   ├── Extensions/               { ServiceCollectionExtensions.cs,
+    │   │                               MudBlazorExtensions.cs }
+    │   └── GlobalUsings.cs
+    └── IndFusion.Ember.Tests/                  # Test project (xUnit v3 on MTP)
 ```
 
-## Core Abstractions Implemented
+## Core Abstractions
 
-### 1. ExxerHub<T>
-- ✅ Generic SignalR hub abstraction
-- ✅ Type-safe messaging
-- ✅ Railway-Oriented Programming (Result<T> pattern)
-- ✅ Cancellation token support
-- ✅ Connection lifecycle management
+### 1. `ExxerHub<T>`
+- Generic SignalR hub abstraction with type-safe messaging
+- Railway-Oriented Programming (`Result`/`Result<T>` via `IndQuestResults`)
+- Cancellation token support
+- Connection lifecycle management
 
-### 2. ServiceHealth<T>
-- ✅ Real-time health monitoring
-- ✅ Health status change events
-- ✅ Type-safe health data
-- ✅ Integration with Microsoft.Extensions.Diagnostics.HealthChecks
+### 2. `ServiceHealth<T>`
+- Real-time health monitoring with status-change events
+- Type-safe health data
+- Integrates with `Microsoft.Extensions.Diagnostics.HealthChecks`
 
-### 3. Dashboard<T>
-- ✅ Blazor Server component base class
-- ✅ Automatic SignalR connection management
-- ✅ Message batching and throttling support
-- ✅ Connection state tracking
-- ✅ Reconnection strategy support
+### 3. `Dashboard<T>`
+- Real-time dashboard abstraction
+- SignalR connection management
+- Message batching and throttling
+- Connection-state tracking with a reconnection strategy
 
 ## Infrastructure Components
 
 ### Connection Management
-- ✅ `ConnectionState` enum (Disconnected, Connecting, Connected, Reconnecting, Failed)
-- ✅ `ReconnectionStrategy` with exponential backoff
+- `ConnectionState` enum (Disconnected, Connecting, Connected, Reconnecting, Failed)
+- `ReconnectionStrategy` with exponential backoff
 
 ### Messaging
-- ✅ `MessageBatcher<T>` - Batches messages to reduce SignalR traffic
-- ✅ `MessageThrottler<T>` - Throttles messages to prevent UI overload
+- `MessageBatcher<T>` — batches messages to reduce transport traffic
+- `MessageThrottler<T>` — throttles messages to prevent UI overload
 
 ## Blazor Integration
 
-### Components
-- ✅ `DashboardComponent<T>` - Base component for real-time dashboards
-- ✅ `ConnectionStateIndicator` - MudBlazor component for connection status
+- `DashboardComponent<T>` — base component for real-time dashboards
+- `ConnectionStateIndicator` — MudBlazor connection-status indicator
 
-### Extensions
-- ✅ `ServiceCollectionExtensions` - DI registration helpers
-- ✅ `MudBlazorExtensions` - Placeholder for MudBlazor helpers
+> **Note:** the project uses `Microsoft.NET.Sdk` (not `Microsoft.NET.Sdk.Razor`),
+> so `.razor` files are not compiled into components; only the `.cs` partials
+> compile. Converting to the Razor SDK is a flagged, deferred decision.
+
+## Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `IndQuestResults` | 1.1.0 | `Result<T>` pattern |
+| `Microsoft.AspNetCore.SignalR.Client` | 10.0.8 | SignalR client transport |
+| `MudBlazor` | 9.5.0 | Blazor UI components |
+| `Microsoft.AspNetCore.App` (FrameworkReference) | — | ASP.NET Core / SignalR server |
 
 ## NuGet Package Configuration
 
-- ✅ Package ID: `ExxerCube.Prisma.SignalR.Abstractions`
-- ✅ Version: 1.0.0
-- ✅ Target Framework: .NET 10.0
-- ✅ Dependencies:
-  - IndQuestResults (1.1.0) - Result<T> pattern
-  - Microsoft.AspNetCore.SignalR (10.0.0)
-  - Microsoft.AspNetCore.SignalR.Client (10.0.0)
-  - Microsoft.Extensions.* (10.0.0)
-  - MudBlazor (8.11)
+- `IsPackable=true`, `GenerateDocumentationFile=true`, `TreatWarningsAsErrors=true`
+- `PackageLicenseExpression=MIT`
+- README (`README.md`) and icon (`icon.png`) packed at the package root
 
 ## Architecture Compliance
 
-✅ **Hexagonal Architecture**
-- Ports (Abstractions) clearly separated from Adapters (Infrastructure)
-- Clean interfaces with no infrastructure dependencies
+- **Hexagonal Architecture** — ports (Abstractions) separated from adapters (Infrastructure)
+- **Railway-Oriented Programming** — operations return `Result`/`Result<T>`; no exceptions for control flow
+- **Independent package** — no project-specific dependencies; ships standalone
+- `ConfigureAwait(false)` in library code
+- Source-generated `[LoggerMessage]` logging (CA1848)
 
-✅ **Railway-Oriented Programming**
-- All operations return `Result<T>` or `Result`
-- No exceptions for control flow
-- Cancellation support via `ResultExtensions.Cancelled()`
-
-✅ **Independent Package**
-- No dependencies on ExxerCube.Prisma.Domain or other project-specific code
-- Uses NuGet packages only (IndQuestResults for Result<T>)
-- Can be published independently
-
-## Next Steps
-
-1. **Testing** - Create unit tests for all abstractions
-2. **Documentation** - Add XML documentation examples
-3. **Examples** - Create usage examples for each abstraction
-4. **Integration Tests** - Test with real SignalR hubs
-5. **Performance Testing** - Validate batching/throttling performance
-
-## Usage Example
+## DI Registration
 
 ```csharp
-// 1. Configure services
-services.AddSignalR();
+// Register the Ember SignalR abstractions
 services.AddSignalRAbstractions();
 
-// 2. Create hub
-public class FileMetadataHub : ExxerHub<FileMetadata>
-{
-    public FileMetadataHub(ILogger<FileMetadataHub> logger) : base(logger) { }
-}
-
-// 3. Use in Blazor component
-public partial class FileDashboard : DashboardComponent<FileMetadata>
-{
-    protected override Dashboard<FileMetadata> CreateDashboard(
-        HubConnection hubConnection,
-        ReconnectionStrategy? strategy,
-        ILogger<DashboardComponent<FileMetadata>> logger)
-    {
-        return new FileMetadataDashboardImpl(hubConnection, strategy, logger);
-    }
-}
+// Register health tracking for a given service type
+services.AddServiceHealth<MyService>();
 ```
 
-## Compliance Checklist
+## Testing & Mutation Stack
 
-- [x] Hexagonal Architecture compliance
-- [x] Railway-Oriented Programming (Result<T>)
-- [x] Cancellation token support
-- [x] ConfigureAwait(false) in library code
-- [x] XML documentation for all public APIs
-- [x] TreatWarningsAsErrors enabled
-- [x] Independent package (no project dependencies)
-- [x] NuGet package metadata configured
-- [x] MudBlazor integration
-- [x] Connection state management
-- [x] Message batching/throttling
+- **xUnit v3** (`xunit.v3`) running on the **Microsoft Testing Platform (MTP)** — not VSTest
+- **Stryker.NET** 4.14.2 with the MTP test-runner for mutation testing
+- 199 tests passing; mutation score is the coverage signal of record (MTP-native
+  line coverage is blocked pending an MTP 2.x-compatible coverage extension)
 
-## Notes
-
-- The package uses `IndQuestResults` for Result<T> pattern (same as Domain project)
-- All async methods use `.ConfigureAwait(false)` per architecture standards
-- Connection count tracking requires implementation-specific logic (noted in GetConnectionCountAsync)
-- Dashboard reconnection logic can be extended in derived classes
-
+See `docs/tasks/mutation-coverage-improvement-plan.md` for survivor analysis.

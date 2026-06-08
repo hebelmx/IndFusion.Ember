@@ -22,7 +22,7 @@
     <!-- NuGet Package Configuration -->
     <IsPackable>true</IsPackable>
     <PackageId>IndFusion.Ember</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Abel Briones Ramirez</Authors>
     <Company>Exxerpro Solutions</Company>
     <Product>IndFusion Ember</Product>
@@ -35,11 +35,11 @@
     <RepositoryUrl>https://github.com/hebelmx/IndFusion.Ember.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/hebelmx/IndFusion.Ember</PackageProjectUrl>
-    <Copyright>© 2025 Exxerpro Solutions</Copyright>
-    
+    <Copyright>© 2025-2026 Exxerpro Solutions</Copyright>
+
     <!-- Assembly Metadata -->
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
   </PropertyGroup>
 
   <!-- ============================================================================ -->
