@@ -54,14 +54,14 @@
   <!-- ============================================================================ -->
   <ItemGroup Label="SignalR">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.8" />
   </ItemGroup>
 
   <!-- ============================================================================ -->
   <!-- PACKAGE REFERENCES - BLAZOR -->
   <!-- ============================================================================ -->
   <ItemGroup Label="Blazor">
-    <PackageReference Include="MudBlazor" Version="8.11" />
+    <PackageReference Include="MudBlazor" Version="9.5.0" />
   </ItemGroup>
 
   <!-- ============================================================================ -->
