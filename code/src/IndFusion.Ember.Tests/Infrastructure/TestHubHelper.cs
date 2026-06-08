@@ -22,10 +22,17 @@ public static class TestHubHelper
         IGroupManager mockGroups)
         where THub : Hub
     {
-        // Use reflection to set protected properties
-        var contextProperty = typeof(Hub).GetProperty("Context", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var clientsProperty = typeof(Hub).GetProperty("Clients", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var groupsProperty = typeof(Hub).GetProperty("Groups", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        // Hub.Context/Clients/Groups are public, settable properties. (Looking them up with
+        // BindingFlags.NonPublic returns null and silently leaves them unset, which is why
+        // these mocks previously never took effect.)
+        const System.Reflection.BindingFlags flags =
+            System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.NonPublic
+            | System.Reflection.BindingFlags.Instance;
+
+        var contextProperty = typeof(Hub).GetProperty("Context", flags);
+        var clientsProperty = typeof(Hub).GetProperty("Clients", flags);
+        var groupsProperty = typeof(Hub).GetProperty("Groups", flags);
 
         contextProperty?.SetValue(hub, mockContext);
         clientsProperty?.SetValue(hub, mockClients);
