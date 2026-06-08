@@ -9,14 +9,21 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
-    <EnableCentralPackageVersionsManagement>false</EnableCentralPackageVersionsManagement>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <EnableCentralPackageVersionsManagement>false</EnableCentralPackageVersionsManagement>
   </PropertyGroup>
 
-  <!-- Microsoft Testing Platform removed - not compatible with xUnit v2 + Stryker -->
+  <!-- ============================================================================ -->
+  <!-- MICROSOFT TESTING PLATFORM (xUnit.net v3) -->
+  <!-- Runs natively on MTP, enabling the Stryker.NET mtp test-runner. -->
+  <!-- ============================================================================ -->
+  <PropertyGroup Label="Microsoft Testing Platform">
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
 
   <!-- ============================================================================ -->
   <!-- TESTING UTILITIES -->
@@ -24,13 +31,6 @@
   <ItemGroup Label="Testing Utilities">
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
-  </ItemGroup>
-
-  <!-- ============================================================================ -->
-  <!-- LOGGING & DIAGNOSTICS -->
-  <!-- ============================================================================ -->
-  <ItemGroup Label="Logging">
-    <PackageReference Include="Meziantou.Extensions.Logging.Xunit" Version="1.0.20" />
   </ItemGroup>
 
   <!-- ============================================================================ -->
@@ -44,41 +44,32 @@
   </ItemGroup>
 
   <!-- ============================================================================ -->
-  <!-- XUNIT V2 CONFIGURATION (Stryker Compatible) -->
+  <!-- XUNIT V3 (Microsoft Testing Platform native) -->
   <!-- ============================================================================ -->
-  <ItemGroup Label="xUnit v2">
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+  <ItemGroup Label="xUnit v3">
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
   </ItemGroup>
 
   <!-- ============================================================================ -->
   <!-- CODE COVERAGE -->
+  <!-- NOTE: Microsoft.Testing.Extensions.CodeCoverage 18.6.2 (latest) is built against
+       MTP 1.9.x and is binary-incompatible with the MTP 2.1.0 that xunit.v3 3.2.2 / the
+       SDK 10 runner require (IOutputDevice.DisplayAsync signature changed). coverlet's
+       VSTest collector is likewise unsupported under MTP. Until a 2.x-compatible coverage
+       extension ships, mutation score (Stryker) is the coverage signal of record. -->
   <!-- ============================================================================ -->
-  <ItemGroup Label="Code Coverage">
-    <PackageReference Include="coverlet.collector" Version="6.0.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
 
   <!-- ============================================================================ -->
   <!-- SIGNALR TESTING -->
   <!-- ============================================================================ -->
   <ItemGroup Label="SignalR Testing">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.0" />
-  </ItemGroup>
-
-  <!-- ============================================================================ -->
-  <!-- STRYKER MUTATION TESTING -->
-  <!-- ============================================================================ -->
-  <ItemGroup Label="Stryker">
-    <PackageReference Include="StrykerMutator.Core" Version="0.9.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.8" />
   </ItemGroup>
 
   <!-- ============================================================================ -->
@@ -87,8 +78,6 @@
   <ItemGroup>
     <ProjectReference Include="..\IndFusion.Ember\IndFusion.Ember.csproj" />
   </ItemGroup>
-
-  <!-- Testing Platform Capabilities removed - not compatible with xUnit v2 + Stryker -->
 
   <!-- ============================================================================ -->
   <!-- GLOBAL USINGS -->
@@ -106,4 +95,3 @@
   </ItemGroup>
 
 </Project>
-

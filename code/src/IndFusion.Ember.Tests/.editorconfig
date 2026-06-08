@@ -1,0 +1,20 @@
+# Analyzer configuration for the test project.
+# Test code intentionally relaxes a handful of library-oriented rules.
+root = true
+
+[*.cs]
+# Test methods use the Method_Scenario_ExpectedResult naming convention (xUnit standard).
+dotnet_diagnostic.CA1707.severity = none
+
+# Test fixtures and helper SUT subclasses don't need to be sealed.
+dotnet_diagnostic.CA1852.severity = none
+
+# Test classes implementing IDisposable for teardown don't need GC.SuppressFinalize.
+dotnet_diagnostic.CA1816.severity = none
+
+# Test assemblies are never shipped, so an explicit assembly version is unnecessary.
+dotnet_diagnostic.CA1016.severity = none
+
+# Verifying ILogger.Log(...) on an NSubstitute mock is a test assertion, not real
+# logging; the "argument may be expensive" perf rule does not apply.
+dotnet_diagnostic.CA1873.severity = none
